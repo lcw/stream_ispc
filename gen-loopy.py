@@ -8,6 +8,7 @@ def transform(knl, vars, stream_dtype):
     knl = lp.split_iname(
         knl, "i", 2**18, outer_tag="g.0", slabs=(0, 1))
     knl = lp.split_iname(knl, "i_inner", 8, inner_tag="l.0")
+    knl = lp.tag_instructions(knl, "!streaming_store")
 
     knl = lp.add_and_infer_dtypes(knl, {
         var: stream_dtype
@@ -22,13 +23,11 @@ def transform(knl, vars, stream_dtype):
 def gen_code(knl):
     knl = lp.preprocess_kernel(knl)
     knl = lp.get_one_scheduled_kernel(knl)
-    ispc_code, arg_info = lp.generate_code(knl)
-
-    return ispc_code
+    return lp.generate_code_v2(knl).all_code()
 
 
 def main():
-    stream_dtype = np.float64
+    stream_dtype = np.float32
     index_dtype = np.int32
 
     def make_knl(name, insn, vars):
