@@ -1,17 +1,17 @@
 OBJDIR  := build
 UNAME_S := $(shell uname -s)
 
-CC=icc
-CFLAGS=-std=gnu99 -g -xHOST -O3 -ffreestanding -openmp
+# CC=icc
+# CFLAGS=-std=gnu99 -g -xHOST -O3 -ffreestanding -openmp
 
-CXX=icpc
-CXXFLAGS=-g -xHOST -O3 -ffreestanding -openmp -DISPC_USE_OMP
+# CXX=icpc
+# CXXFLAGS=-g -xHOST -O3 -ffreestanding -openmp -DISPC_USE_OMP
 
-# CC=gcc
-# CFLAGS=-std=gnu11 -Wall -Wextra -Wpedantic -O3 -march=native -fopenmp -fno-omit-frame-pointer -ffreestanding
-#
-# CXX=g++
-# CXXFLAGS=-std=c++11 -Wall -Wextra -Wpedantic -O3 -march=native -fopenmp -fno-omit-frame-pointer -DISPC_USE_OMP
+ CC=gcc
+ CFLAGS=-std=gnu11 -Wall -Wextra -Wpedantic -O3 -march=native -fopenmp -fno-omit-frame-pointer -ffreestanding
+
+ CXX=g++
+ CXXFLAGS=-std=c++11 -Wall -Wextra -Wpedantic -O3 -march=native -fopenmp -fno-omit-frame-pointer -DISPC_USE_OMP
 
 ISPC = ispc
 ISPCFLAGS = --target=avx2-i32x8 --pic --opt=force-aligned-memory --werror
