@@ -39,7 +39,7 @@ task void stream_init_task(uniform STREAM_TYPE a[], uniform STREAM_TYPE b[],
                            uniform STREAM_TYPE c[], uniform int count)
 {
   uniform int first = taskIndex * CHUNK;
-  uniform int last = min(count, (int)((taskIndex + 1) * CHUNK));
+  uniform int last = min(count, (uniform int)((taskIndex + 1) * CHUNK));
 
   foreach (i = first ... last)
   {
@@ -60,7 +60,7 @@ task void stream_selfscale_task(uniform STREAM_TYPE a[], uniform STREAM_TYPE sca
                             uniform int count)
 {
   uniform int first = taskIndex * CHUNK;
-  uniform int last = min(count, (int)((taskIndex + 1) * CHUNK));
+  uniform int last = min(count, (uniform int)((taskIndex + 1) * CHUNK));
 
   foreach (i = first ... last)
   {
@@ -80,7 +80,7 @@ task void stream_copy_task(uniform STREAM_TYPE a[], uniform STREAM_TYPE b[],
                             uniform int count)
 {
   uniform int first = taskIndex * CHUNK;
-  uniform int last = min(count, (int)((taskIndex + 1) * CHUNK));
+  uniform int last = min(count, (uniform int)((taskIndex + 1) * CHUNK));
 
   foreach (i = first ... last)
   {
@@ -99,7 +99,7 @@ task void stream_scale_task(uniform STREAM_TYPE a[], uniform STREAM_TYPE b[],
                             uniform STREAM_TYPE scalar, uniform int count)
 {
   uniform int first = taskIndex * CHUNK;
-  uniform int last = min(count, (int)((taskIndex + 1) * CHUNK));
+  uniform int last = min(count, (uniform int)((taskIndex + 1) * CHUNK));
 
   foreach (i = first ... last)
   {
@@ -118,7 +118,7 @@ task void stream_add_task(uniform STREAM_TYPE a[], uniform STREAM_TYPE b[],
                           uniform STREAM_TYPE c[], uniform int count)
 {
   uniform int first = taskIndex * CHUNK;
-  uniform int last = min(count, (int)((taskIndex + 1) * CHUNK));
+  uniform int last = min(count, (uniform int)((taskIndex + 1) * CHUNK));
 
   foreach (i = first ... last)
   {
@@ -140,7 +140,7 @@ task void stream_triad_task(uniform STREAM_TYPE a[], uniform STREAM_TYPE b[],
                             uniform int count)
 {
   uniform int first = taskIndex * CHUNK;
-  uniform int last = min(count, (int)((taskIndex + 1) * CHUNK));
+  uniform int last = min(count, (uniform int)((taskIndex + 1) * CHUNK));
 
   foreach (i = first ... last)
   {
