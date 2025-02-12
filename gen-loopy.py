@@ -22,7 +22,6 @@ def transform(knl, vars, stream_dtype):
 
 def gen_code(knl):
     knl = lp.preprocess_kernel(knl)
-    knl = lp.get_one_scheduled_kernel(knl)
     return lp.generate_code_v2(knl).all_code()
 
 
