@@ -14,7 +14,7 @@ UNAME_S := $(shell uname -s)
  CXXFLAGS=-std=c++11 -Wall -Wextra -Wpedantic -O3 -march=native -fopenmp -fno-omit-frame-pointer -DISPC_USE_OMP
 
 ISPC = ispc
-ISPCFLAGS = --target=avx2-i32x8 --pic --opt=force-aligned-memory --werror
+ISPCFLAGS = --target=avx2-i32x8 --pic --opt=force-aligned-memory
 
 ifeq ($(UNAME_S),Darwin)
   CFLAGS += -Wa,-q
