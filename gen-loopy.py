@@ -34,7 +34,7 @@ def main():
                 "{[i]: 0<=i<n}",
                 insn,
                 target=lp.ISPCTarget(), index_dtype=index_dtype,
-                name="stream_"+name+"_tasks")
+                name="stream_"+name+"_tasks", lang_version=(2018, 2))
 
         knl = transform(knl, vars, stream_dtype)
         return knl
