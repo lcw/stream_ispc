@@ -71,6 +71,10 @@ $(OBJDIR)/stream.o: stream.c | $(OBJDIR)
 $(OBJDIR)/stream_ispc: $(OBJDIR)/stream_ispc.o $(OBJDIR)/stream_tasks.o $(OBJDIR)/tasksys.o | $(OBJDIR)
 $(OBJDIR)/stream_ispc.o: stream_ispc.c | $(OBJDIR)
 $(OBJDIR)/stream_ispc_loopy: $(OBJDIR)/stream_ispc.o $(OBJDIR)/stream_tasks_loopy.o $(OBJDIR)/tasksys.o | $(OBJDIR)
+	# FIXME Redundant with rule above, unclear why it's needed.
+	# Appears necessary with GNU make 4.4.1 (?).
+	# https://github.com/lcw/stream_ispc/pull/3#discussion_r1955373089
+	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $^ $(LDLIBS)
 $(OBJDIR)/stream_tasks.o: stream_tasks.ispc | $(OBJDIR)
 $(OBJDIR)/tasksys.o: tasksys.cpp | $(OBJDIR)
 
