@@ -2,162 +2,145 @@
 
 This repository contains John D. McCalpin's [[https://www.cs.virginia.edu/stream/][STREAM benchmark]] and a
 port of that benchmark to ISPC.  The port to ISPC also uses dynamic
-memory allocation.
+memory allocation, and it provides a straightforward way to
+ensure that streaming/"non-temporal" stores are used.
 
 ** Building
 
-   There is a =Makefile= provided to build the two benchmark codes.
-   You may need to edit the =Makefile= to adjust compilers and
-   compiler flags for your system.  To build just run =make= and the
-   executable files =build/stream= and =build/stream_ispc= should be
-   built.
+There is a =Makefile= provided to build the benchmark codes.
+You may need to edit the =Makefile= to adjust compilers and
+compiler flags for your system.  To build just run =make= and the
+executable files =build/stream=, =build/stream_ispc=
+=build/stream_ispc_loopy= should be built. Only the latter version
+uses streaming stores.
 
-** Performance Results (aka =icc= vs =ispc=)
+** Performance Results
 
-   I compared =build/stream= and =build/stream_ispc= on a dual socket
-   Xeon CPU E5-2698 v3 system.  I used the following build flags
+These results were obtained on a Raptor Lake (i7-1365U) laptop.
 
-   #+BEGIN_SRC
-   CC=icc
-   CFLAGS=-std=gnu99 -g -xHOST -O3 -ffreestanding -openmp
+Here is the version information for the compilers we are using:
 
-   CXX=icpc
-   CXXFLAGS=-g -xHOST -O3 -ffreestanding -openmp -DISPC_USE_OMP
-
-   ISPC = ispc
-   ISPCFLAGS = --target=avx2-i32x8 --pic --opt=force-aligned-memory --werror
+#+BEGIN_SRC sh :exports both
+gcc --version
    #+END_SRC
+#+results:
+: gcc (Debian 14.2.0-16) 14.2.0
+: Copyright (C) 2024 Free Software Foundation, Inc.
+: This is free software; see the source for copying conditions.  There is NO
+: warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
-   Here is the version information for the compilers we are using:
+#+BEGIN_SRC sh :exports both
+ispc --version
+#+END_SRC
+#+results:
+: Intel(r) Implicit SPMD Program Compiler (Intel(r) ISPC), 1.25.3 (build  @ 20241223, LLVM 19.1.6)
 
-   #+BEGIN_SRC sh :exports both
-   icc --version
-   #+END_SRC
-   #+results:
-   : icc (ICC) 16.0.1 20151021
-   : Copyright (C) 1985-2015 Intel Corporation.  All rights reserved.
+Here is the benchmark result from the STREAM benchmark compiled with =gcc=:
+#+BEGIN_SRC sh :exports both
+OMP_PLACES=cores OMP_DISPLAY_ENV=true ./build/stream
+#+END_SRC
+#+results:
+: -------------------------------------------------------------
+: Function    Best Rate MB/s  Avg time     Min time     Max time
+: Copy:           45432.1     0.029872     0.014087     0.049874
+: Scale:          44736.3     0.035883     0.014306     0.051508
+: Add:            48758.6     0.035604     0.019689     0.070311
+: Triad:          49037.1     0.032059     0.019577     0.060323
+: -------------------------------------------------------------
 
-   #+BEGIN_SRC sh :exports both
-   ispc --version
-   #+END_SRC
-   #+results:
-   : Intel(r) SPMD Program Compiler (ispc), 1.9.0 (build commit 89dfbf2125fc2cba @ 20160212, LLVM 3.8)
+Here is the result from the modified STREAM benchmark with kernels
+compiled with =ispc= using =ispc='s high-level loop constructs and
+without streaming stores:
+#+BEGIN_SRC sh :exports both
+OMP_PLACES=cores OMP_DISPLAY_ENV=true ./build/stream_ispc
+#+END_SRC
+#+results:
+: -------------------------------------------------------------
+: Function    Best Rate MB/s  Avg time     Min time     Max time
+: Copy:           49986.2     0.013017     0.012804     0.013866
+: Scale:          49472.4     0.013018     0.012937     0.013115
+: Add:            52357.1     0.018545     0.018336     0.019054
+: Triad:          52421.3     0.019951     0.018313     0.030611
+: -------------------------------------------------------------
 
-   Here is the output from the STREAM benchmark compiled with =icc=:
-   #+BEGIN_SRC sh :exports both
-   OMP_PLACES=cores OMP_DISPLAY_ENV=true ./build/stream
-   #+END_SRC
-   #+results:
-   : -------------------------------------------------------------
-   : STREAM version $Revision: 5.10 $
-   : -------------------------------------------------------------
-   : This system uses 4 bytes per array element.
-   : -------------------------------------------------------------
-   : Array size = 80000000 (elements), Offset = 0 (elements)
-   : Memory per array = 305.2 MiB (= 0.3 GiB).
-   : Total memory required = 915.5 MiB (= 0.9 GiB).
-   : Each kernel will be executed 10 times.
-   :  The *best* time for each kernel (excluding the first iteration)
-   :  will be used to compute the reported bandwidth.
-   : -------------------------------------------------------------
-   : 
-   : OPENMP DISPLAY ENVIRONMENT BEGIN
-   :    _OPENMP='201307'
-   :   [host] OMP_CANCELLATION='FALSE'
-   :   [host] OMP_DISPLAY_ENV='TRUE'
-   :   [host] OMP_DYNAMIC='FALSE'
-   :   [host] OMP_MAX_ACTIVE_LEVELS='2147483647'
-   :   [host] OMP_NESTED='FALSE'
-   :   [host] OMP_NUM_THREADS: value is not defined
-   :   [host] OMP_PLACES='cores'
-   :   [host] OMP_PROC_BIND='spread'
-   :   [host] OMP_SCHEDULE='static'
-   :   [host] OMP_STACKSIZE='4M'
-   :   [host] OMP_THREAD_LIMIT='2147483647'
-   :   [host] OMP_WAIT_POLICY='PASSIVE'
-   : OPENMP DISPLAY ENVIRONMENT END
-   : 
-   : 
-   : Number of Threads requested = 32
-   : Number of Threads counted = 32
-   : -------------------------------------------------------------
-   : Your clock granularity/precision appears to be 1 microseconds.
-   : Each test below will take on the order of 5419 microseconds.
-   :    (= 5419 clock ticks)
-   : Increase the size of the arrays if this shows that
-   : you are not getting at least 20 clock ticks per test.
-   : -------------------------------------------------------------
-   : WARNING -- The above is only a rough guideline.
-   : For best results, please be sure you know the
-   : precision of your system timer.
-   : -------------------------------------------------------------
-   : Function    Best Rate MB/s  Avg time     Min time     Max time
-   : Copy:          104902.7     0.006141     0.006101     0.006308
-   : Scale:         106522.0     0.006039     0.006008     0.006146
-   : Add:           112215.9     0.008605     0.008555     0.008762
-   : Triad:         112097.2     0.008595     0.008564     0.008710
-   : -------------------------------------------------------------
-   : Solution Validates: avg error less than 1.000000e-06 on all three arrays
-   : Results Validation Verbose Results:
-   :     Expected a(1), b(1), c(1): 1153300692992.000000 230660145152.000000 307546849280.000000
-   :     Observed a(1), b(1), c(1): 1153300824064.000000 230660161536.000000 307546882048.000000
-   :     Rel Errors on a, b, c:     1.136495e-07 7.103091e-08 1.065464e-07
-   : -------------------------------------------------------------
+And here are the the results from the modified STREAM benchmark with kernels
+compiled with =ispc= using kernels generated by [[https://github.com/inducer/loopy][loopy]], including the
+use of streaming stores:
+#+BEGIN_SRC sh :exports both
+OMP_PLACES=cores OMP_DISPLAY_ENV=true ./build/stream_ispc_loopy
+#+END_SRC
+#+results:
+: -------------------------------------------------------------
+: Function    Best Rate MB/s  Avg time     Min time     Max time
+: Copy:           65615.9     0.015429     0.009754     0.030991
+: Scale:          66276.3     0.015031     0.009657     0.031078
+: Add:            63480.7     0.017027     0.015123     0.029783
+: Triad:          63078.4     0.019036     0.015219     0.028874
+: -------------------------------------------------------------
 
+** Full Sample Output
 
-   Here is the output from the modified STREAM benchmark with kernels
-   compiled with =ispc=:
-   #+BEGIN_SRC sh :exports both
-   OMP_PLACES=cores OMP_DISPLAY_ENV=true ./build/stream_ispc
-   #+END_SRC
-   #+results:
-   : Array size = 80000000 (elements)
-   : Memory per array = 305.2 MiB (= 0.3 GiB).
-   : Total memory required = 915.5 MiB (= 0.9 GiB).
-   : Chunk size: 16384
-   : Page size: 4096
-   : Cache line size: 64
-   : sizeof(STREAM_TYPE): 4
-   : Each kernel will be executed 10 times.
-   :  The *best* time for each kernel (excluding the first iteration)
-   :  will be used to compute the reported bandwidth.
-   : -------------------------------------------------------------
-   : 
-   : OPENMP DISPLAY ENVIRONMENT BEGIN
-   :    _OPENMP='201307'
-   :   [host] OMP_CANCELLATION='FALSE'
-   :   [host] OMP_DISPLAY_ENV='TRUE'
-   :   [host] OMP_DYNAMIC='FALSE'
-   :   [host] OMP_MAX_ACTIVE_LEVELS='2147483647'
-   :   [host] OMP_NESTED='FALSE'
-   :   [host] OMP_NUM_THREADS: value is not defined
-   :   [host] OMP_PLACES='cores'
-   :   [host] OMP_PROC_BIND='spread'
-   :   [host] OMP_SCHEDULE='static'
-   :   [host] OMP_STACKSIZE='4M'
-   :   [host] OMP_THREAD_LIMIT='2147483647'
-   :   [host] OMP_WAIT_POLICY='PASSIVE'
-   : OPENMP DISPLAY ENVIRONMENT END
-   : 
-   : 
-   : -------------------------------------------------------------
-   : Each test below will take on the order of 6482 microseconds.
-   : -------------------------------------------------------------
-   : -------------------------------------------------------------
-   : Function    Best Rate MB/s  Avg time     Min time     Max time
-   : Copy:           75179.7     0.008546     0.008513     0.008603
-   : Scale:          73558.4     0.008729     0.008701     0.008792
-   : Add:            83152.5     0.011573     0.011545     0.011613
-   : Triad:          83805.1     0.011485     0.011455     0.011520
-   : -------------------------------------------------------------
-   : Solution Validates: avg error less than 1.000000e-06 on all three arrays
-   : Results Validation Verbose Results:
-   :     Expected a(1), b(1), c(1): 1153300692992.000000 230660145152.000000 307546849280.000000
-   :     Observed a(1), b(1), c(1): 1153300824064.000000 230660161536.000000 307546882048.000000
-   :     Rel Errors on a, b, c:     1.136495e-07 7.103091e-08 1.065464e-07
-   : -------------------------------------------------------------
-
-   As we can see the =icc= version is about 1.3x faster than the
-   =ispc= version.  I tried various memory alignment procedures but
-   could not improve the performance of the =ispc= version of the
-   benchmark.
+For completeness, here is the full output from the STREAM benchmark compiled with =gcc=:
+#+BEGIN_SRC sh :exports both
+OMP_PLACES=cores OMP_DISPLAY_ENV=true ./build/stream
+#+END_SRC
+#+results:
+: OPENMP DISPLAY ENVIRONMENT BEGIN
+:   _OPENMP = '201511'
+:   [host] OMP_DYNAMIC = 'FALSE'
+:   [host] OMP_NESTED = 'FALSE'
+:   [host] OMP_NUM_THREADS = '1'
+:   [host] OMP_SCHEDULE = 'DYNAMIC'
+:   [host] OMP_PROC_BIND = 'FALSE'
+:   [host] OMP_PLACES = '{0:2},{2:2},{4},{5},{6},{7},{8},{9},{10},{11}'
+:   [host] OMP_STACKSIZE = '0'
+:   [host] OMP_WAIT_POLICY = 'PASSIVE'
+:   [host] OMP_THREAD_LIMIT = '4294967295'
+:   [host] OMP_MAX_ACTIVE_LEVELS = '1'
+:   [host] OMP_NUM_TEAMS = '0'
+:   [host] OMP_TEAMS_THREAD_LIMIT = '0'
+:   [all] OMP_CANCELLATION = 'FALSE'
+:   [all] OMP_DEFAULT_DEVICE = '0'
+:   [all] OMP_MAX_TASK_PRIORITY = '0'
+:   [all] OMP_DISPLAY_AFFINITY = 'FALSE'
+:   [host] OMP_AFFINITY_FORMAT = 'level %L thread %i affinity %A'
+:   [host] OMP_ALLOCATOR = 'omp_default_mem_alloc'
+:   [all] OMP_TARGET_OFFLOAD = 'DEFAULT'
+: OPENMP DISPLAY ENVIRONMENT END
+: -------------------------------------------------------------
+: STREAM version $Revision: 5.10 $
+: -------------------------------------------------------------
+: This system uses 4 bytes per array element.
+: -------------------------------------------------------------
+: Array size = 80000000 (elements), Offset = 0 (elements)
+: Memory per array = 305.2 MiB (= 0.3 GiB).
+: Total memory required = 915.5 MiB (= 0.9 GiB).
+: Each kernel will be executed 10 times.
+:  The *best* time for each kernel (excluding the first iteration)
+:  will be used to compute the reported bandwidth.
+: -------------------------------------------------------------
+: Number of Threads requested = 12
+: Number of Threads counted = 12
+: -------------------------------------------------------------
+: Your clock granularity/precision appears to be 1 microseconds.
+: Each test below will take on the order of 11368 microseconds.
+:    (= 11368 clock ticks)
+: Increase the size of the arrays if this shows that
+: you are not getting at least 20 clock ticks per test.
+: -------------------------------------------------------------
+: WARNING -- The above is only a rough guideline.
+: For best results, please be sure you know the
+: precision of your system timer.
+: -------------------------------------------------------------
+: Function    Best Rate MB/s  Avg time     Min time     Max time
+: Copy:           45432.1     0.029872     0.014087     0.049874
+: Scale:          44736.3     0.035883     0.014306     0.051508
+: Add:            48758.6     0.035604     0.019689     0.070311
+: Triad:          49037.1     0.032059     0.019577     0.060323
+: -------------------------------------------------------------
+: Solution Validates: avg error less than 1.000000e-06 on all three arrays
+: Results Validation Verbose Results:
+:     Expected a(1), b(1), c(1): 1153300692992.000000 230660145152.000000 307546849280.000000
+:     Observed a(1), b(1), c(1): 1153300824064.000000 230660161536.000000 307546882048.000000
+:     Rel Errors on a, b, c:     2.383402e-08 1.489626e-08 2.234439e-08
+: -------------------------------------------------------------

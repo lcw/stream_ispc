@@ -1,5 +1,6 @@
 import loopy as lp
 import numpy as np
+import sys
 
 
 def transform(knl, vars, stream_dtype):
@@ -22,12 +23,17 @@ def transform(knl, vars, stream_dtype):
 
 def gen_code(knl):
     knl = lp.preprocess_kernel(knl)
-    knl = lp.get_one_scheduled_kernel(knl)
     return lp.generate_code_v2(knl).all_code()
 
 
 def main():
-    stream_dtype = np.float32
+    if "-DSTREAM_TYPE=float" in sys.argv:
+        stream_dtype = np.float32
+    elif "-DSTREAM_TYPE=double" in sys.argv:
+        stream_dtype = np.float64
+    else:
+        raise ValueError("STREAM_TYPE unrecognized or not found")
+
     index_dtype = np.int32
 
     def make_knl(name, insn, vars):
@@ -35,7 +41,7 @@ def main():
                 "{[i]: 0<=i<n}",
                 insn,
                 target=lp.ISPCTarget(), index_dtype=index_dtype,
-                name="stream_"+name+"_tasks")
+                name="stream_"+name+"_tasks", lang_version=(2018, 2))
 
         knl = transform(knl, vars, stream_dtype)
         return knl
