@@ -1,5 +1,6 @@
 import loopy as lp
 import numpy as np
+import sys
 
 
 def transform(knl, vars, stream_dtype):
@@ -26,7 +27,13 @@ def gen_code(knl):
 
 
 def main():
-    stream_dtype = np.float32
+    if "-DSTREAM_TYPE=float" in sys.argv:
+        stream_dtype = np.float32
+    elif "-DSTREAM_TYPE=double" in sys.argv:
+        stream_dtype = np.float64
+    else:
+        raise ValueError("STREAM_TYPE unrecognized or not found")
+
     index_dtype = np.int32
 
     def make_knl(name, insn, vars):

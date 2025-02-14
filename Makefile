@@ -53,7 +53,7 @@ $(OBJDIR):
 	mkdir -p $@
 
 $(OBJDIR)/stream_tasks_loopy.ispc: loopy-venv $(OBJDIR)
-	loopy-venv/bin/python3 gen-loopy.py > $@
+	loopy-venv/bin/python3 gen-loopy.py $(STREAM_DEFINES) > $@
 
 $(OBJDIR)/stream:      CFLAGS+=-mcmodel=medium $(STREAM_DEFINES)
 $(OBJDIR)/stream_ispc: CFLAGS+=$(STREAM_DEFINES)
